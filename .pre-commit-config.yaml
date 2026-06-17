@@ -1,0 +1,44 @@
+default_stages: [pre-commit, pre-push]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-ast
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: debug-statements
+      - id: detect-private-key
+      - id: check-added-large-files
+        args: ["--maxkb=500"]
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+
+  - repo: local
+    hooks:
+      - id: check-python-staged
+        name: Check staged Python files
+        entry: poetry run ruff check --fix
+        language: system
+        types: [python]
+        stages: [pre-commit]
+
+      - id: format-python-staged
+        name: Format staged Python files
+        entry: poetry run ruff format
+        language: system
+        types: [python]
+        stages: [pre-commit]
+
+      - id: check-python-nofix
+        name: Run full Python linting, type checks and security checks
+        entry: make check-python-nofix
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
