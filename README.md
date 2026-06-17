@@ -146,8 +146,13 @@ Please read [the contribution guidelines](CONTRIBUTING.md) before creating a pul
 ## Additional Documentation
 
 [CONTRIBUTING.md](CONTRIBUTING.md)
+
 [RELEASING.md](RELEASING.md)
+
 [SECURITY.md](SECURITY.md)
+
 [CHANGELOG.md](CHANGELOG.md)
+
 [LICENSE.md](LICENSE.md)
-[CODEOWNERS.md](CODEOWNERS.md)
+
+[CODEOWNERS](CODEOWNERS)
