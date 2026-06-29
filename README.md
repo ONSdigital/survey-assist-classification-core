@@ -92,11 +92,15 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
 
 ```txt
 survey-assist-classification-core/
-|-- docs/                           # mkdocs documentation
-|-- src/                            # main source
-|-- tests/                          # pytest unit tests
-|-- .github/                        # GitHub actions workflows
-|-- README.md                       # This file
+|-- docs/                                    # mkdocs documentation
+|-- src/
+|   `-- survey_assist_classification_core/
+|       |-- config/                          # domain configuration (LlmDomainConfig)
+|       |-- llm/                             # LLM orchestration (Phase 2)
+|       `-- models/                          # prompts response models (Phase 2)
+|-- tests/                                   # pytest unit tests
+|-- .github/                                 # GitHub actions workflows
+|-- README.md                                # This file
 ```
 
 ## Testing
