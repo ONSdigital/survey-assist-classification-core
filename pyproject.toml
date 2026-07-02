@@ -100,7 +100,7 @@ source = ["src"]
 omit = [
     "*/tests/*",
     "*/docs/*",
-    # Ported LLM implementation; covered in SA-TBC-2.
+    # Ported LLM implementation; covered in SA-774.
     "*/llm/sic_llm.py",
     "*/llm/soc_llm.py",
     "*/llm/prompt_sic.py",
