@@ -1,1 +1,51 @@
 """Response and configuration models for Survey Assist classification."""
+
+from survey_assist_classification_core.models.config_model import (
+    EmbeddingConfig,
+    EmbeddingStatus,
+    FullConfig,
+    LLMConfig,
+    LookupsConfig,
+    SocEmbeddingConfig,
+    SocFullConfig,
+    SocLookupsConfig,
+)
+from survey_assist_classification_core.models.response_model import (
+    ClosedFollowUp,
+    FinalSICAssignment,
+    OpenFollowUp,
+    RagCandidate,
+    RagResponse,
+    RerankingResponse,
+    SicCandidate,
+    SicResponse,
+    SocCandidate,
+    SocResponse,
+    SurveyAssistSicResponse,
+    SurveyAssistSocResponse,
+    UnambiguousResponse,
+)
+
+__all__ = [
+    "ClosedFollowUp",
+    "EmbeddingConfig",
+    "EmbeddingStatus",
+    "FinalSICAssignment",
+    "FullConfig",
+    "LLMConfig",
+    "LookupsConfig",
+    "OpenFollowUp",
+    "RagCandidate",
+    "RagResponse",
+    "RerankingResponse",
+    "SicCandidate",
+    "SicResponse",
+    "SocCandidate",
+    "SocEmbeddingConfig",
+    "SocFullConfig",
+    "SocLookupsConfig",
+    "SocResponse",
+    "SurveyAssistSicResponse",
+    "SurveyAssistSocResponse",
+    "UnambiguousResponse",
+]
