@@ -26,19 +26,18 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 from occupational_classification.data_access.soc_data_access import load_soc_index
 
-from survey_assist_classification_core.config import get_config
+from survey_assist_classification_core.llm.prompt_common import CORE_PROMPT
 from survey_assist_classification_core.models.response_model import (
     OpenFollowUp,
     RagResponse,
     SocResponse,
     UnambiguousResponse,
 )
+from survey_assist_classification_core.utils.constants_soc import get_default_config
 
-config = get_config("soc")
+config = get_default_config()
 
-_core_prompt = """You are a conscientious classification assistant of respondent data
-for the use in the UK official statistics. Respondent data may be in English or Welsh,
-but you always respond in British English."""
+_core_prompt = CORE_PROMPT
 
 _soc_template = """"Given the respondent data (that may include all or some of
 job title, job description, level of education, line management responsibilities,
@@ -155,20 +154,6 @@ GENERAL_PROMPT_RAG = PromptTemplate.from_template(
     },
 )
 
-FIX_PARSING_PROMPT = PromptTemplate.from_template(
-    """You are a meticulous assistant tasked with ensuring that
-the output from a language model adheres strictly to the required JSON format.
-
-Your task is to review the output and make any necessary adjustments to ensure it is valid JSON.
-If the output is not valid JSON, you must fix it without altering the intended meaning.
-
-====Output from LLM====
-{llm_output}
-
-===Output Format===
-{format_instructions}
-"""
-)
 
 _soc_template_unambiguous = """"You are an expert in occupational classifications.
 You are tasked with determining whether a survey response can be assigned to a
