@@ -32,6 +32,7 @@ from industrial_classification.data_access.sic_data_access import load_sic_index
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_core.prompts import PromptTemplate
 
+from survey_assist_classification_core.llm.prompt_common import CORE_PROMPT
 from survey_assist_classification_core.models.response_model import (
     ClosedFollowUp,
     FinalSICAssignment,
@@ -44,9 +45,7 @@ from survey_assist_classification_core.utils.constants_sic import get_default_co
 
 config = get_default_config()
 
-_core_prompt = """You are a conscientious classification assistant of respondent data
-for the use in the UK official statistics. Respondent data may be in English or Welsh,
-but you always respond in British English."""
+_core_prompt = CORE_PROMPT
 
 _sic_template = """"Given the respondent's description of the main activity their
 company does, their job title and job description, your task is to determine
@@ -620,20 +619,4 @@ SIC_PROMPT_CLOSEDFOLLOWUP = PromptTemplate.from_template(
     partial_variables={
         "format_instructions": parser_followup_closed.get_format_instructions(),
     },
-)
-
-
-FIX_PARSING_PROMPT = PromptTemplate.from_template(
-    """You are a meticulous assistant tasked with ensuring that
-the output from a language model adheres strictly to the required JSON format.
-
-Your task is to review the output and make any necessary adjustments to ensure it is valid JSON.
-If the output is not valid JSON, you must fix it without altering the intended meaning.
-
-====Output from LLM====
-{llm_output}
-
-===Output Format===
-{format_instructions}
-"""
 )
