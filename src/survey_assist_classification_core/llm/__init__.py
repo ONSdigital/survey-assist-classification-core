@@ -1,7 +1,8 @@
-"""LLM orchestration package for Survey Assist classification."""
+"""LLM orchestration for Survey Assist classification."""
 
 # pylint: disable=duplicate-code
 
+from survey_assist_classification_core.llm.llm import ClassificationLLM
 from survey_assist_classification_core.llm.prompt import (
     FIX_PARSING_PROMPT,
     GENERAL_PROMPT_RAG,
@@ -17,6 +18,12 @@ from survey_assist_classification_core.llm.prompt import (
     SOC_PROMPT_OPENFOLLOWUP,
     SOC_PROMPT_PYDANTIC,
     SOC_PROMPT_UNAMBIGUOUS,
+)
+from survey_assist_classification_core.llm.sic_llm import (
+    ClassificationLLM as SicClassificationLLM,
+)
+from survey_assist_classification_core.llm.soc_llm import (
+    ClassificationLLM as SocClassificationLLM,
 )
 
 __all__ = [
@@ -34,4 +41,7 @@ __all__ = [
     "SOC_PROMPT_OPENFOLLOWUP",
     "SOC_PROMPT_PYDANTIC",
     "SOC_PROMPT_UNAMBIGUOUS",
+    "ClassificationLLM",
+    "SicClassificationLLM",
+    "SocClassificationLLM",
 ]
