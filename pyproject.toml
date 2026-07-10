@@ -29,6 +29,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.1.0"
+pytest-asyncio = "^1.2.0"
+pytest-mock = "^3.15.0"
 bandit = "^1.9.4"
 ruff = "^0.15.17"
 mypy = "^2.1.0"
@@ -89,6 +91,10 @@ convention = "google"
 "tests/*" = [
     # Allow use of assert statements in tests
     "S101",
+    # Allow magic values used in comparison in tests
+    "PLR2004",
+    # Ported pytest.raises match= strings from utils (periods are literal)
+    "RUF043",
 ]
 
 [tool.ruff.format]
@@ -100,7 +106,9 @@ source = ["src"]
 omit = [
     "*/tests/*",
     "*/docs/*",
-    # Ported LLM implementation and prompts; behaviour covered in SA-774.
+    # Ported ClassificationLLM modules are exercised by test_llm_sic / test_llm_soc.
+    # Line coverage stays ~70% with that suite (same as sic-classification-utils llm
+    # package); fix-parsing error paths are not covered by the ported tests.
     "*/llm/sic_llm.py",
     "*/llm/soc_llm.py",
     "*/llm/prompt_sic.py",
@@ -114,7 +122,9 @@ fail_under = 80
 [tool.pytest.ini_options]
 markers = [
     "utils: mark a test as a utils test",
+    "llm: mark a test as an llm test",
 ]
+asyncio_mode = "auto"
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s - %(levelname)s - %(message)s"
