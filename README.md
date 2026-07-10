@@ -95,9 +95,10 @@ survey-assist-classification-core/
 |-- docs/                                    # mkdocs documentation
 |-- src/
 |   `-- survey_assist_classification_core/
-|       |-- config/                          # domain configuration (LlmDomainConfig)
-|       |-- llm/                             # LLM orchestration (Phase 2)
-|       `-- models/                          # prompts response models (Phase 2)
+|       |-- config/                          # domain configuration (get_config, LlmDomainConfig)
+|       |-- llm/                             # ClassificationLLM facade and domain delegates
+|       |-- models/                          # response and config models
+|       `-- utils/                           # shared constants and defaults
 |-- tests/                                   # pytest unit tests
 |-- .github/                                 # GitHub actions workflows
 |-- README.md                                # This file
