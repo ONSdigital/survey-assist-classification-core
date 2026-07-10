@@ -100,7 +100,9 @@ source = ["src"]
 omit = [
     "*/tests/*",
     "*/docs/*",
-    # Ported prompt modules; behaviour covered in SA-774.
+    # Ported LLM implementation and prompts; behaviour covered in SA-774.
+    "*/llm/sic_llm.py",
+    "*/llm/soc_llm.py",
     "*/llm/prompt_sic.py",
     "*/llm/prompt_soc.py",
 ]
