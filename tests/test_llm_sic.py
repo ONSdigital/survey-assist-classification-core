@@ -1,5 +1,5 @@
 # pylint: disable=C0103, C0116, R0801, R0913, R0917, W0212, W0612, W0613
-"""Tests for survey_assist_classification_core.llm.sic_llm."""
+"""Tests for survey_assist_classification_core.llm.llm."""
 
 import json
 from unittest import mock
@@ -18,9 +18,8 @@ from langchain_core.messages import AIMessage
 from langchain_google_vertexai import ChatVertexAI
 from langchain_openai import ChatOpenAI
 
-from survey_assist_classification_core.llm.sic_llm import ClassificationLLM
+from survey_assist_classification_core.llm.llm import ClassificationLLM
 from survey_assist_classification_core.models.response_model import (
-    ClosedFollowUp,
     FinalSICAssignment,
     OpenFollowUp,
     SicResponse,
@@ -34,34 +33,6 @@ LOCATION = "europe-west2"
 # Test initializaiton
 @pytest.fixture
 def classification_llm_with_sic(mock_sic):  # pylint: disable=W0621
-    llm_class = ClassificationLLM(model_name=MODEL_NAME)
-    llm_class.sic = mock_sic
-    return llm_class
-
-
-@pytest.fixture
-async def classification_llm_with_sic_reranker(mocker, mock_sic):  # pylint: disable=W0621
-    mock_llm = mock.MagicMock()  # noqa: F841
-    mock_object_dict = {
-        "selected_codes": [
-            {
-                "code": "11111",
-                "title": "Education",
-                "relevance_score": 0.5,
-                "reasoning": "This is reasoning for the llm answer. Padded to 30 characters (Pydantic)",  # pylint: disable=C0301
-            }
-        ],
-        "excluded_codes": [],
-        "status": "success",
-        "n_requested": 5,
-    }
-    mock_object_json = json.dumps(mock_object_dict)
-    mock_message = mocker.Mock(spec=AIMessage)
-    mock_message.content = mock_object_json
-    mock_patcher = mocker.patch(  # noqa: F841
-        "survey_assist_classification_core.llm.sic_llm.ChatVertexAI.ainvoke",
-        return_value=mock_message,
-    )
     llm_class = ClassificationLLM(model_name=MODEL_NAME)
     llm_class.sic = mock_sic
     return llm_class
@@ -87,7 +58,7 @@ async def classification_llm_with_sic_unambiguous(mocker, mock_sic):  # pylint: 
     mock_message = mocker.Mock(spec=AIMessage)
     mock_message.content = mock_object_json
     mock_patcher = mocker.patch(  # noqa: F841
-        "survey_assist_classification_core.llm.sic_llm.ChatVertexAI.ainvoke",
+        "survey_assist_classification_core.llm.llm.ChatVertexAI.ainvoke",
         return_value=mock_message,
     )
     llm_class = ClassificationLLM(model_name=MODEL_NAME)
@@ -117,7 +88,7 @@ async def classification_llm_with_sic_sa_rag_sic(mocker, mock_sic):  # pylint: d
     mock_message = mocker.Mock(spec=AIMessage)
     mock_message.content = mock_object_json
     mock_patcher = mocker.patch(  # noqa: F841
-        "survey_assist_classification_core.llm.sic_llm.ChatVertexAI.ainvoke",
+        "survey_assist_classification_core.llm.llm.ChatVertexAI.ainvoke",
         return_value=mock_message,
     )
     llm_class = ClassificationLLM(model_name=MODEL_NAME)
@@ -171,44 +142,6 @@ def test_llm_model_default():
 @pytest.mark.llm
 def test_model_name_default():
     assert ClassificationLLM().llm.model_name == "gemini-2.5-flash"
-
-
-# Test methods in ClassificationLLM
-@pytest.mark.llm
-async def test_llm_response_mocked_get_sic_code(mocker):
-    mock_object_dict = {
-        "codable": True,
-        "followup": "This is follow-up",
-        "sic_code": "12345",
-        "sic_descriptive": "description12345",
-        "sic_candidates": [
-            {
-                "sic_code": "23456",
-                "sic_descriptive": "description23456",
-                "likelihood": 0.5,
-            },
-            {
-                "sic_code": "34567",
-                "sic_descriptive": "description34567",
-                "likelihood": 0.5,
-            },
-        ],
-        "reasoning": "reasoning12345",
-    }
-    mock_object_json = json.dumps(mock_object_dict)
-
-    mock_message = mocker.Mock(spec=AIMessage)
-    mock_message.content = mock_object_json
-
-    mock_patcher = mocker.patch(  # noqa: F841
-        "survey_assist_classification_core.llm.sic_llm.ChatVertexAI.ainvoke",
-        return_value=mock_message,
-    )
-
-    result = await ClassificationLLM(model_name=MODEL_NAME).get_sic_code(
-        industry_descr="", job_description="", job_title=""
-    )
-    assert isinstance(result, SicResponse)
 
 
 # pylint: disable=R0801, W0621
@@ -323,73 +256,6 @@ async def test_llm_response_mocked_unambiguous_sic_code(
 
 
 @pytest.mark.llm
-def test_llm_response_mocked_prompt_candidate_list_filtered_full(
-    mock_sic_meta_patch, classification_llm_with_sic
-):
-    short_list = [
-        {
-            "distance": 0.5,
-            "title": "title",
-            "code": "11111",
-            "four_digit_code": "1111",
-            "two_digit_code": "11",
-        }
-    ]
-
-    result = classification_llm_with_sic._prompt_candidate_list_filtered(
-        short_list=short_list, filtered_list=["11111"]
-    )
-    assert isinstance(result, str)
-
-
-@pytest.mark.llm
-def test_llm_response_mocked_prompt_candidate_list_filtered_no_filtered_list(
-    mock_sic_meta_patch, classification_llm_with_sic
-):
-    short_list = [
-        {
-            "distance": 0.5,
-            "title": "title",
-            "code": "11111",
-            "four_digit_code": "1111",
-            "two_digit_code": "11",
-        }
-    ]
-
-    result = classification_llm_with_sic._prompt_candidate_list_filtered(
-        short_list=short_list
-    )
-    assert result == ""
-
-
-@pytest.mark.llm
-def test_llm_response_mocked_prompt_candidate_list_filtered_character_limit(
-    mock_sic_meta_patch, classification_llm_with_sic
-):
-    short_list = [
-        {
-            "distance": 0.5,
-            "title": "title",
-            "code": "11111",
-            "four_digit_code": "1111",
-            "two_digit_code": "11",
-        },
-        {
-            "distance": 0.5,
-            "title": "title",
-            "code": "11112",
-            "four_digit_code": "1111",
-            "two_digit_code": "11",
-        },
-    ]
-
-    result = classification_llm_with_sic._prompt_candidate_list_filtered(
-        short_list=short_list, chars_limit=80, filtered_list=["11111", "11112"]
-    )
-    assert len(result) < 80
-
-
-@pytest.mark.llm
 async def test_llm_response_mocked_final_sic_code(mocker, prompt_candidate_sic):
     mock_object_dict = {
         "codable": True,
@@ -402,7 +268,7 @@ async def test_llm_response_mocked_final_sic_code(mocker, prompt_candidate_sic):
     mock_message = mocker.Mock(spec=AIMessage)
     mock_message.content = mock_object_json
     mock_patcher = mocker.patch(  # noqa: F841
-        "survey_assist_classification_core.llm.sic_llm.ChatVertexAI.ainvoke",
+        "survey_assist_classification_core.llm.llm.ChatVertexAI.ainvoke",
         return_value=mock_message,
     )
 
@@ -422,7 +288,7 @@ async def test_llm_response_mocked_formulate_open_question(
     mock_message.content = mock_object_json
 
     mock_patcher = mocker.patch(  # noqa: F841
-        "survey_assist_classification_core.llm.sic_llm.ChatVertexAI.ainvoke",
+        "survey_assist_classification_core.llm.llm.ChatVertexAI.ainvoke",
         return_value=mock_message,
     )
 
@@ -433,31 +299,6 @@ async def test_llm_response_mocked_formulate_open_question(
         llm_output="",
     )
     assert isinstance(result[0], OpenFollowUp)
-    assert isinstance(result[1], dict)
-
-
-@pytest.mark.llm
-async def test_llm_response_mocked_formulate_closed_question(
-    mocker, prompt_candidate_sic
-):
-    mock_object_dict = {"class_code": "", "class_descriptive": "", "likelihood": 0.5}
-    mock_object_json = json.dumps(mock_object_dict)
-
-    mock_message = mocker.Mock(spec=AIMessage)
-    mock_message.content = mock_object_json
-
-    mock_patcher = mocker.patch(  # noqa: F841
-        "survey_assist_classification_core.llm.sic_llm.ChatVertexAI.ainvoke",
-        return_value=mock_message,
-    )
-
-    result = await prompt_candidate_sic.formulate_closed_question(
-        industry_descr="",
-        job_title="",
-        job_description="",
-        llm_output="",
-    )
-    assert isinstance(result[0], ClosedFollowUp)
     assert isinstance(result[1], dict)
 
 
@@ -599,43 +440,6 @@ async def test_unambiguous_sic_code_followup_is_str(
     assert isinstance(result, str)
 
 
-@pytest.mark.parametrize(
-    "title, expected_job_title",
-    [
-        (None, "Unknown"),
-        ("", "Unknown"),
-        (" ", "Unknown"),
-        ("teacher", "teacher"),
-    ],
-)
-@pytest.mark.llm
-async def test_reranker_sic_call_dict_job_title_correct(
-    mock_sic_meta_patch,
-    classification_llm_with_sic_reranker,
-    title,
-    expected_job_title,
-):
-    result = (
-        await classification_llm_with_sic_reranker.reranker_sic(
-            "school", title, short_list=[{"title": "Education", "code": "11111"}]
-        )
-    )[2]["job_title"]
-    assert result == expected_job_title
-
-
-@pytest.mark.llm
-async def test_reranker_sic_response_is_str(
-    mock_sic_meta_patch, classification_llm_with_sic_reranker
-):
-    short_list = [{"title": "Education", "code": "11111"}]
-    result = (
-        await classification_llm_with_sic_reranker.reranker_sic(
-            "school", short_list=short_list
-        )
-    )[0].model_dump()["selected_codes"][0]["reasoning"]
-    assert isinstance(result, str)
-
-
 # Tests for rising errors
 @pytest.mark.llm
 def test_open_api_key_raise_not_implemented_error():
@@ -657,17 +461,5 @@ async def test_sa_rag_sic_code_short_list_is_none_raise_value_error(
         ValueError, match="Short list is None - list provided from embedding search."
     ):
         await classification_llm_with_sic_sa_rag_sic.sa_rag_sic_code(
-            industry_descr="", job_description="", job_title=""
-        )
-
-
-@pytest.mark.llm
-async def test_reranker_sic_short_list_is_none_raise_value_error(
-    mock_sic_meta_patch, classification_llm_with_sic_reranker
-):
-    with pytest.raises(
-        ValueError, match="Short list is None - list provided from embedding search."
-    ):
-        await classification_llm_with_sic_reranker.reranker_sic(
             industry_descr="", job_description="", job_title=""
         )

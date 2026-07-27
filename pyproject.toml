@@ -106,11 +106,10 @@ source = ["src"]
 omit = [
     "*/tests/*",
     "*/docs/*",
-    # Ported ClassificationLLM modules are exercised by test_llm_sic / test_llm_soc.
-    # Line coverage stays ~70% with that suite (same as sic-classification-utils llm
-    # package); fix-parsing error paths are not covered by the ported tests.
-    "*/llm/sic_llm.py",
-    "*/llm/soc_llm.py",
+    # Ported ClassificationLLM is exercised by test_llm_sic / test_llm_soc.
+    # Line coverage stays below the package threshold with that suite (same as
+    # utils llm packages); fix-parsing error paths are not covered by the ported tests.
+    "*/llm/llm.py",
     "*/llm/prompt_sic.py",
     "*/llm/prompt_soc.py",
 ]

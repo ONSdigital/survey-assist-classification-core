@@ -96,9 +96,9 @@ survey-assist-classification-core/
 |-- src/
 |   `-- survey_assist_classification_core/
 |       |-- config/                          # domain configuration (get_config, LlmDomainConfig)
-|       |-- llm/                             # ClassificationLLM facade and domain delegates
+|       |-- llm/                             # ClassificationLLM (SIC/SOC via classification_type)
 |       |-- models/                          # response and config models
-|       `-- utils/                           # shared constants and defaults
+|       `-- utils/                           # shared constants (constants.py, SIC/SOC)
 |-- tests/                                   # pytest unit tests
 |-- .github/                                 # GitHub actions workflows
 |-- README.md                                # This file

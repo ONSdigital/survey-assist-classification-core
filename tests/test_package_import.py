@@ -7,8 +7,8 @@ from survey_assist_classification_core import config, llm, models
 from survey_assist_classification_core.config import LlmDomainConfig, get_config
 from survey_assist_classification_core.llm import (
     FIX_PARSING_PROMPT,
-    SIC_PROMPT_PYDANTIC,
-    SOC_PROMPT_PYDANTIC,
+    SIC_PROMPT_UNAMBIGUOUS,
+    SOC_PROMPT_UNAMBIGUOUS,
     ClassificationLLM,
 )
 from survey_assist_classification_core.models import (
@@ -47,8 +47,8 @@ def test_llm_domain_config_stub() -> None:
 def test_prompts_import_from_llm_package() -> None:
     """Merged prompts are importable without legacy utils."""
     assert FIX_PARSING_PROMPT is not None
-    assert SIC_PROMPT_PYDANTIC is not None
-    assert SOC_PROMPT_PYDANTIC is not None
+    assert SIC_PROMPT_UNAMBIGUOUS is not None
+    assert SOC_PROMPT_UNAMBIGUOUS is not None
 
 
 def test_response_models_import_from_models_package() -> None:
@@ -67,17 +67,30 @@ def test_get_default_config_returns_domain_lookups() -> None:
     assert "soc_index" in soc_config["lookups"]
 
 
-def test_classification_llm_facade_supports_sic_and_soc() -> None:
+def test_classification_llm_supports_sic_and_soc() -> None:
     """Merged ClassificationLLM exposes domain-specific methods via config."""
     mock_llm = MagicMock()
     sic = ClassificationLLM(classification_type="sic", llm=mock_llm)
     soc = ClassificationLLM(classification_type="soc", llm=mock_llm)
     assert hasattr(sic, "unambiguous_sic_code")
-    assert hasattr(sic, "reranker_sic")
+    assert hasattr(sic, "sa_rag_sic_code")
+    assert hasattr(sic, "final_sic_code")
+    assert hasattr(sic, "formulate_open_question")
     assert hasattr(soc, "unambiguous_soc_code")
-    assert hasattr(soc, "sa_rag_soc_code")
+    assert hasattr(soc, "formulate_open_question")
     assert not hasattr(sic, "unambiguous_soc_code")
-    assert not hasattr(soc, "reranker_sic")
+    assert not hasattr(soc, "sa_rag_sic_code")
+
+
+def test_classification_llm_rejects_unknown_classification_type() -> None:
+    """Invalid classification_type raises rather than defaulting silently."""
+    mock_llm = MagicMock()
+    try:
+        ClassificationLLM(classification_type="nope", llm=mock_llm)  # type: ignore[arg-type]
+    except ValueError as exc:
+        assert "classification_type must be 'sic' or 'soc'" in str(exc)
+    else:
+        raise AssertionError("expected ValueError for unknown classification_type")
 
 
 def test_get_config_returns_domain_lookups() -> None:
