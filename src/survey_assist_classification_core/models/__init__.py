@@ -23,6 +23,7 @@ from survey_assist_classification_core.models.response_model import (
     SocResponse,
     SurveyAssistSicResponse,
     SurveyAssistSocResponse,
+    TopOneResponse,
     UnambiguousResponse,
 )
 
@@ -47,5 +48,6 @@ __all__ = [
     "SocResponse",
     "SurveyAssistSicResponse",
     "SurveyAssistSocResponse",
+    "TopOneResponse",
     "UnambiguousResponse",
 ]
