@@ -1,6 +1,10 @@
 """Tests for package and subpackage imports."""
 
+import json
 from unittest.mock import MagicMock
+
+import pytest
+from langchain_core.messages import AIMessage
 
 import survey_assist_classification_core
 from survey_assist_classification_core import config, llm, models
@@ -77,9 +81,54 @@ def test_classification_llm_supports_sic_and_soc() -> None:
     assert hasattr(sic, "final_sic_code")
     assert hasattr(sic, "formulate_open_question")
     assert hasattr(soc, "unambiguous_soc_code")
+    assert hasattr(soc, "top_one_soc_code")
     assert hasattr(soc, "formulate_open_question")
     assert not hasattr(sic, "unambiguous_soc_code")
     assert not hasattr(soc, "sa_rag_sic_code")
+
+
+@pytest.mark.llm
+async def test_classification_type_instantiates_domain_unambiguous(mocker) -> None:
+    """classification_type selects the domain method used for unambiguous coding."""
+    payload = {
+        "codable": False,
+        "class_code": None,
+        "class_descriptive": None,
+        "alt_candidates": [
+            {
+                "class_code": "1111",
+                "class_descriptive": "description",
+                "likelihood": 0.5,
+            }
+        ],
+        "reasoning": "This is reasoning for the llm answer. Padded to 50 characters (Pydantic)",
+    }
+    mock_message = mocker.Mock(spec=AIMessage)
+    mock_message.content = json.dumps(payload)
+    mocker.patch(
+        "survey_assist_classification_core.llm.llm.ChatVertexAI.ainvoke",
+        return_value=mock_message,
+    )
+
+    sic = ClassificationLLM(classification_type="sic", model_name="gemini-2.5-flash")
+    soc = ClassificationLLM(classification_type="soc", model_name="gemini-2.5-flash")
+
+    sic_result = await sic.unambiguous_sic_code(
+        industry_descr="school",
+        semantic_search_results=[],
+        job_title="teacher",
+        job_description="educate kids",
+    )
+    soc_result = await soc.unambiguous_soc_code(
+        industry_descr="school",
+        semantic_search_results=[],
+        job_title="teacher",
+        job_description="educate kids",
+        level_of_education="degree",
+    )
+    assert isinstance(sic_result[0], UnambiguousResponse)
+    assert isinstance(soc_result[0], UnambiguousResponse)
+    assert soc_result[1]["level_of_education"] == "degree"
 
 
 def test_classification_llm_rejects_unknown_classification_type() -> None:
