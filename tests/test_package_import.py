@@ -7,8 +7,8 @@ from survey_assist_classification_core import config, llm, models
 from survey_assist_classification_core.config import LlmDomainConfig, get_config
 from survey_assist_classification_core.llm import (
     FIX_PARSING_PROMPT,
-    SIC_PROMPT_PYDANTIC,
-    SOC_PROMPT_PYDANTIC,
+    SIC_PROMPT_UNAMBIGUOUS,
+    SOC_PROMPT_UNAMBIGUOUS,
     ClassificationLLM,
 )
 from survey_assist_classification_core.models import (
@@ -47,8 +47,8 @@ def test_llm_domain_config_stub() -> None:
 def test_prompts_import_from_llm_package() -> None:
     """Merged prompts are importable without legacy utils."""
     assert FIX_PARSING_PROMPT is not None
-    assert SIC_PROMPT_PYDANTIC is not None
-    assert SOC_PROMPT_PYDANTIC is not None
+    assert SIC_PROMPT_UNAMBIGUOUS is not None
+    assert SOC_PROMPT_UNAMBIGUOUS is not None
 
 
 def test_response_models_import_from_models_package() -> None:
@@ -73,13 +73,13 @@ def test_classification_llm_supports_sic_and_soc() -> None:
     sic = ClassificationLLM(classification_type="sic", llm=mock_llm)
     soc = ClassificationLLM(classification_type="soc", llm=mock_llm)
     assert hasattr(sic, "unambiguous_sic_code")
-    assert hasattr(sic, "reranker_sic")
+    assert hasattr(sic, "sa_rag_sic_code")
+    assert hasattr(sic, "final_sic_code")
     assert hasattr(sic, "formulate_open_question")
     assert hasattr(soc, "unambiguous_soc_code")
-    assert hasattr(soc, "sa_rag_soc_code")
     assert hasattr(soc, "formulate_open_question")
     assert not hasattr(sic, "unambiguous_soc_code")
-    assert not hasattr(soc, "reranker_sic")
+    assert not hasattr(soc, "sa_rag_sic_code")
 
 
 def test_classification_llm_rejects_unknown_classification_type() -> None:
