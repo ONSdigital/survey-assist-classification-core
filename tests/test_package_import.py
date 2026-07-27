@@ -5,8 +5,8 @@ from survey_assist_classification_core import config, llm, models
 from survey_assist_classification_core.config import LlmDomainConfig
 from survey_assist_classification_core.llm import (
     FIX_PARSING_PROMPT,
-    SIC_PROMPT_PYDANTIC,
-    SOC_PROMPT_PYDANTIC,
+    SIC_PROMPT_UNAMBIGUOUS,
+    SOC_PROMPT_UNAMBIGUOUS,
 )
 from survey_assist_classification_core.models import (
     RagResponse,
@@ -44,8 +44,8 @@ def test_llm_domain_config_stub() -> None:
 def test_prompts_import_from_llm_package() -> None:
     """Merged prompts are importable without legacy utils."""
     assert FIX_PARSING_PROMPT is not None
-    assert SIC_PROMPT_PYDANTIC is not None
-    assert SOC_PROMPT_PYDANTIC is not None
+    assert SIC_PROMPT_UNAMBIGUOUS is not None
+    assert SOC_PROMPT_UNAMBIGUOUS is not None
 
 
 def test_response_models_import_from_models_package() -> None:
