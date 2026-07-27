@@ -9,6 +9,7 @@ from survey_assist_classification_core.llm.prompt_sic import (
 )
 from survey_assist_classification_core.llm.prompt_soc import (
     SOC_PROMPT_OPENFOLLOWUP,
+    SOC_PROMPT_TOP_ONE_ONLY,
     SOC_PROMPT_UNAMBIGUOUS,
 )
 
@@ -19,5 +20,6 @@ __all__ = [
     "SIC_PROMPT_OPENFOLLOWUP",
     "SIC_PROMPT_UNAMBIGUOUS",
     "SOC_PROMPT_OPENFOLLOWUP",
+    "SOC_PROMPT_TOP_ONE_ONLY",
     "SOC_PROMPT_UNAMBIGUOUS",
 ]
