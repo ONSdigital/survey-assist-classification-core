@@ -35,6 +35,7 @@ from survey_assist_classification_core.llm.prompt import (
     SIC_PROMPT_OPENFOLLOWUP,
     SIC_PROMPT_UNAMBIGUOUS,
     SOC_PROMPT_OPENFOLLOWUP,
+    SOC_PROMPT_TOP_ONE_ONLY,
     SOC_PROMPT_UNAMBIGUOUS,
 )
 from survey_assist_classification_core.models.response_model import (
@@ -43,6 +44,7 @@ from survey_assist_classification_core.models.response_model import (
     RagCandidate,
     SicCandidate,
     SicResponse,
+    TopOneResponse,
     UnambiguousResponse,
 )
 from survey_assist_classification_core.utils.constants import truncate_identifier
@@ -66,9 +68,11 @@ _SIC_ONLY_ATTRS = frozenset(
 _SOC_ONLY_ATTRS = frozenset(
     {
         "unambiguous_soc_code",
+        "top_one_soc_code",
         "_prompt_candidate_soc",
         "soc_meta",
         "soc_prompt_unambiguous",
+        "soc_prompt_top_one",
         "soc_prompt_openfollowup",
         "soc",
     }
@@ -130,6 +134,7 @@ class ClassificationLLM:
         else:
             self.soc_meta = get_soc_meta(self.config["lookups"]["soc_structure"])
             self.soc_prompt_unambiguous = SOC_PROMPT_UNAMBIGUOUS
+            self.soc_prompt_top_one = SOC_PROMPT_TOP_ONE_ONLY
             self.soc_prompt_openfollowup = SOC_PROMPT_OPENFOLLOWUP
 
     def __getattribute__(self, name: str) -> Any:
@@ -250,11 +255,12 @@ class ClassificationLLM:
 
         return "\n".join(candidates)
 
-    async def formulate_open_question(
+    async def formulate_open_question(  # noqa: PLR0913
         self,
         industry_descr: str,
         job_title: str | None = None,
         job_description: str | None = None,
+        level_of_education: str | None = None,
         llm_output: SicCandidate | RagCandidate | list | None = None,
         correlation_id: str | None = None,
     ) -> tuple[OpenFollowUp, Any]:
@@ -264,12 +270,14 @@ class ClassificationLLM:
             if self.classification_type == "soc"
             else self.sic_prompt_openfollowup
         )
-        call_dict = {
+        call_dict: dict[str, Any] = {
             "industry_descr": industry_descr,
             "job_title": self._coerce_unknown(job_title),
             "job_description": self._coerce_unknown(job_description),
             "llm_output": str(llm_output),
         }
+        if self.classification_type == "soc":
+            call_dict["level_of_education"] = self._coerce_unknown(level_of_education)
 
         if self.verbose:
             final_prompt = prompt.format(**call_dict)
@@ -280,6 +288,7 @@ class ClassificationLLM:
             "LLM request sent - formulate_open_question",
             job_title=truncate_identifier(job_title),
             job_description=truncate_identifier(job_description),
+            level_of_education=truncate_identifier(str(level_of_education)),
             industry_descr=truncate_identifier(industry_descr),
             correlation_id=correlation_id or "",
         )
@@ -883,6 +892,7 @@ class ClassificationLLM:
         semantic_search_results: list[dict],
         job_title: str | None = None,
         job_description: str | None = None,
+        level_of_education: str | None = None,
         candidates_limit: int | None = None,
         code_digits: int | None = None,
         correlation_id: str | None = None,
@@ -907,11 +917,17 @@ class ClassificationLLM:
             if (job_description is None or job_description in {"", " "})
             else job_description
         )
+        level_of_education = (
+            "Unknown"
+            if (level_of_education is None or level_of_education in {"", " "})
+            else level_of_education
+        )
 
         call_dict = {
             "industry_descr": industry_descr,
             "job_title": job_title,
             "job_description": job_description,
+            "level_of_education": level_of_education,
             "soc_candidates": soc_candidates,
         }
 
@@ -924,6 +940,7 @@ class ClassificationLLM:
             "LLM request sent - unambiguous_soc_code",
             job_title=truncate_identifier(job_title),
             job_description=truncate_identifier(job_description),
+            level_of_education=truncate_identifier(str(level_of_education)),
             industry_descr=truncate_identifier(industry_descr),
             correlation_id=correlation_id or "",
         )
@@ -1009,3 +1026,97 @@ class ClassificationLLM:
                 )
 
         return validated_answer, call_dict
+
+    async def top_one_soc_code(
+        self,
+        respondent_data: dict[str, Any],
+        semantic_search_results: list[dict[str, Any]],
+        candidates_limit: int | None = None,
+        code_digits: int = 4,
+    ) -> TopOneResponse:
+        """Pick the strongest SOC candidate from a semantic search shortlist.
+
+        Always returns one shortlisted SOC code with a likelihood score reflecting
+        confidence relative to the other candidates.
+        """
+        self._require_domain("soc")
+        if candidates_limit is None:
+            candidates_limit = self.config["llm"]["candidates_limit"]
+
+        def fallback_response(reasoning: str) -> TopOneResponse:
+            if self.soc is None:
+                self.soc = load_soc_hierarchy(
+                    self.config["lookups"]["soc_index"],
+                    self.config["lookups"]["soc_structure"],
+                )
+
+            fallback_code = str(semantic_search_results[0]["code"])[:code_digits]
+            fallback_item = self.soc[fallback_code]
+            return TopOneResponse(
+                soc_code=fallback_item.soc_code,
+                soc_title=fallback_item.group_title,
+                likelihood_score=0.1,
+                reasoning=reasoning,
+            )
+
+        soc_candidates = self._prompt_candidate_list(
+            short_list=semantic_search_results,
+            code_digits=code_digits,
+            candidates_limit=candidates_limit,
+        )
+        call_dict = {
+            "respondent_data": respondent_data,
+            "soc_candidates": soc_candidates,
+        }
+
+        if self.verbose:
+            final_prompt = self.soc_prompt_top_one.format(**call_dict)
+            logger.debug(final_prompt)
+
+        chain = self.soc_prompt_top_one | self.llm
+        try:
+            response = await chain.ainvoke(call_dict, return_only_outputs=True)
+        except (ValueError, AttributeError) as err:
+            logger.error(f"Error from chain, exit early: {err}", error=str(err))
+            return fallback_response("Error from chain, exit early")
+
+        if self.verbose:
+            logger.debug(f"LLM response: {response}")
+
+        parser = PydanticOutputParser(pydantic_object=TopOneResponse)
+        try:
+            validated_answer = parser.parse(str(response.content))
+        except (ValueError, AttributeError) as parse_error:
+            logger.error(
+                f"Failed to parse response: {parse_error}", error=str(parse_error)
+            )
+            logger.warning(
+                "Failed to parse response", response_content=str(response.content)
+            )
+
+            try:
+                fix_chain = FIX_PARSING_PROMPT | self.llm
+                response = await fix_chain.ainvoke(
+                    {
+                        "llm_output": str(response.content),
+                        "format_instructions": parser.get_format_instructions(),
+                    },
+                    return_only_outputs=True,
+                )
+                validated_answer = parser.parse(str(response.content))
+                logger.debug("Successfully parsed reformatted response.")
+            except (ValueError, AttributeError) as parse_error2:
+                logger.error(
+                    f"Failed to parse response again: {parse_error2}",
+                    error=str(parse_error2),
+                )
+                logger.warning(
+                    "Failed to parse response again",
+                    response_content=str(response.content),
+                )
+                reasoning = (
+                    f"ERROR parse_error=<{parse_error2}>, response=<{response.content}>"
+                )
+                validated_answer = fallback_response(reasoning)
+
+        return validated_answer
