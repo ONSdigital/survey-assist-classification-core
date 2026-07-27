@@ -96,8 +96,9 @@ survey-assist-classification-core/
 |-- src/
 |   `-- survey_assist_classification_core/
 |       |-- config/                          # domain configuration (LlmDomainConfig)
-|       |-- llm/                             # LLM orchestration (Phase 2)
-|       `-- models/                          # prompts response models (Phase 2)
+|       |-- llm/                             # prompts and LLM orchestration (Phase 2)
+|       |-- models/                          # prompts response models (Phase 2)
+|       `-- utils/                           # shared constants (constants.py, SIC/SOC)
 |-- tests/                                   # pytest unit tests
 |-- .github/                                 # GitHub actions workflows
 |-- README.md                                # This file
