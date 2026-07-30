@@ -11,24 +11,14 @@ from survey_assist_classification_core.models.config_model import (
     SocLookupsConfig,
 )
 from survey_assist_classification_core.models.response_model import (
-    ClosedFollowUp,
     FinalSICAssignment,
     OpenFollowUp,
-    RagCandidate,
-    RagResponse,
-    RerankingResponse,
-    SicCandidate,
     SicResponse,
-    SocCandidate,
-    SocResponse,
-    SurveyAssistSicResponse,
-    SurveyAssistSocResponse,
     TopOneResponse,
     UnambiguousResponse,
 )
 
 __all__ = [
-    "ClosedFollowUp",
     "EmbeddingConfig",
     "EmbeddingStatus",
     "FinalSICAssignment",
@@ -36,18 +26,10 @@ __all__ = [
     "LLMConfig",
     "LookupsConfig",
     "OpenFollowUp",
-    "RagCandidate",
-    "RagResponse",
-    "RerankingResponse",
-    "SicCandidate",
     "SicResponse",
-    "SocCandidate",
     "SocEmbeddingConfig",
     "SocFullConfig",
     "SocLookupsConfig",
-    "SocResponse",
-    "SurveyAssistSicResponse",
-    "SurveyAssistSocResponse",
     "TopOneResponse",
     "UnambiguousResponse",
 ]

@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class LlmDomainConfig(BaseModel):
@@ -12,13 +12,15 @@ class LlmDomainConfig(BaseModel):
         classification_type: Classification domain identifier (``sic`` or ``soc``).
         llm_model_name: Name of the language model to use.
         model_location: Cloud region for hosted models.
-        prompt_paths: Mapping of prompt identifiers to file paths.
+        code_digits: Number of digits in the classification code.
+        candidates_limit: Maximum number of candidate codes to return.
     """
 
     classification_type: Literal["sic", "soc"]
     llm_model_name: str
     model_location: str = "europe-west2"
-    prompt_paths: dict[str, str] = Field(default_factory=dict)
+    code_digits: int
+    candidates_limit: int
 
 
 def get_config(classification_type: Literal["sic", "soc"] = "sic"):

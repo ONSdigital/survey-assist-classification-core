@@ -16,9 +16,9 @@ from survey_assist_classification_core.llm import (
     ClassificationLLM,
 )
 from survey_assist_classification_core.models import (
-    RagResponse,
+    FinalSICAssignment,
+    OpenFollowUp,
     SicResponse,
-    SocResponse,
     UnambiguousResponse,
 )
 from survey_assist_classification_core.utils.constants import get_default_config
@@ -38,14 +38,19 @@ def test_subpackages_import() -> None:
 
 def test_llm_domain_config_stub() -> None:
     """Test the stub LlmDomainConfig model."""
+    code_digits = 5
+    candidates_limit = 10
     domain_config = LlmDomainConfig(
         classification_type="sic",
         llm_model_name="gemini-2.5-flash",
+        code_digits=code_digits,
+        candidates_limit=candidates_limit,
     )
     assert domain_config.classification_type == "sic"
     assert domain_config.llm_model_name == "gemini-2.5-flash"
     assert domain_config.model_location == "europe-west2"
-    assert domain_config.prompt_paths == {}
+    assert domain_config.code_digits == code_digits
+    assert domain_config.candidates_limit == candidates_limit
 
 
 def test_prompts_import_from_llm_package() -> None:
@@ -56,11 +61,11 @@ def test_prompts_import_from_llm_package() -> None:
 
 
 def test_response_models_import_from_models_package() -> None:
-    """Merged response models are importable without legacy utils."""
+    """Kept response models for remaining prompts are importable."""
     assert SicResponse is not None
-    assert SocResponse is not None
-    assert RagResponse is not None
     assert UnambiguousResponse is not None
+    assert FinalSICAssignment is not None
+    assert OpenFollowUp is not None
 
 
 def test_get_default_config_returns_domain_lookups() -> None:
