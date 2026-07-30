@@ -38,8 +38,6 @@ pytest-cov = "^7.1.0"
 pre-commit = "^4.6.0"
 detect-secrets = "^1.5.0"
 deptry = "^0.25.1"
-sic-classification-utils = { git = "https://github.com/ONSdigital/sic-classification-utils.git", tag = "v0.1.15" }
-soc-classification-utils = { git = "https://github.com/ONSdigital/soc-classification-utils.git", tag = "v0.1.5" }
 
 [tool.ruff]
 line-length = 88
