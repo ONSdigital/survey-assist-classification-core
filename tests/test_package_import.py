@@ -9,9 +9,9 @@ from survey_assist_classification_core.llm import (
     SOC_PROMPT_UNAMBIGUOUS,
 )
 from survey_assist_classification_core.models import (
-    RagResponse,
+    FinalSICAssignment,
+    OpenFollowUp,
     SicResponse,
-    SocResponse,
     UnambiguousResponse,
 )
 from survey_assist_classification_core.utils.constants import get_default_config
@@ -54,11 +54,11 @@ def test_prompts_import_from_llm_package() -> None:
 
 
 def test_response_models_import_from_models_package() -> None:
-    """Merged response models are importable without legacy utils."""
+    """Kept response models for remaining prompts are importable."""
     assert SicResponse is not None
-    assert SocResponse is not None
-    assert RagResponse is not None
     assert UnambiguousResponse is not None
+    assert FinalSICAssignment is not None
+    assert OpenFollowUp is not None
 
 
 def test_get_default_config_returns_domain_lookups() -> None:
