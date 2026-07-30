@@ -26,7 +26,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from survey_assist_classification_core.utils.constants_sic import MAX_ALT_CANDIDATES
+from survey_assist_classification_core.utils.constants import MAX_ALT_CANDIDATES
 
 
 class SearchIndexItem(BaseModel):
