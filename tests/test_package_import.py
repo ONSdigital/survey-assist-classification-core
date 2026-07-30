@@ -31,14 +31,19 @@ def test_subpackages_import() -> None:
 
 def test_llm_domain_config_stub() -> None:
     """Test the stub LlmDomainConfig model."""
+    code_digits = 5
+    candidates_limit = 10
     domain_config = LlmDomainConfig(
         classification_type="sic",
         llm_model_name="gemini-2.5-flash",
+        code_digits=code_digits,
+        candidates_limit=candidates_limit,
     )
     assert domain_config.classification_type == "sic"
     assert domain_config.llm_model_name == "gemini-2.5-flash"
     assert domain_config.model_location == "europe-west2"
-    assert domain_config.prompt_paths == {}
+    assert domain_config.code_digits == code_digits
+    assert domain_config.candidates_limit == candidates_limit
 
 
 def test_prompts_import_from_llm_package() -> None:
