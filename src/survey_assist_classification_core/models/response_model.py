@@ -297,6 +297,7 @@ class OpenFollowUp(BaseModel):
         default="",
     )
 
+
 class TopOneResponse(BaseModel):
     """Top-ranked SOC code selected from a supplied shortlist."""
 
