@@ -13,7 +13,10 @@ Classes:
                          classification code assignment.
     FinalSICAssignment: Response model for final assignment of a SIC code.
     OpenFollowUp: Represents a response model for open ended follow-up question.
+<<<<<<< HEAD
     TopOneResponse: Top-ranked SOC code selected from a supplied shortlist.
+=======
+>>>>>>> origin/main
 
 Constants:
     MAX_ALT_CANDIDATES: Maximum number of alternative candidates allowed in certain models.
@@ -296,6 +299,7 @@ class OpenFollowUp(BaseModel):
             assign classification code.""",
         default="",
     )
+<<<<<<< HEAD
 
 
 class TopOneResponse(BaseModel):
@@ -324,3 +328,5 @@ class TopOneResponse(BaseModel):
         ),
         min_length=1,
     )
+=======
+>>>>>>> origin/main
