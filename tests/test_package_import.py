@@ -133,7 +133,8 @@ async def test_classification_type_instantiates_domain_unambiguous(mocker) -> No
     )
     assert isinstance(sic_result[0], UnambiguousResponse)
     assert isinstance(soc_result[0], UnambiguousResponse)
-    assert soc_result[1]["level_of_education"] == "degree"
+    assert "Level of education" in soc_result[1]["respondent_data"]
+    assert "degree" in soc_result[1]["respondent_data"]
 
 
 def test_classification_llm_rejects_unknown_classification_type() -> None:
