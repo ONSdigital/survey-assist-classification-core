@@ -205,18 +205,18 @@ async def test_llm_response_mocked_sa_rag_sic_code(
 
 
 @pytest.mark.parametrize(
-    "title, expected_job_title",
+    "title, job_title_in_respondent_data",
     [
-        ("", "Unknown"),
-        (" ", "Unknown"),
-        (None, "Unknown"),
-        ("teacher", "teacher"),
+        ("", False),
+        (" ", False),
+        (None, False),
+        ("teacher", True),
     ],
 )
 @pytest.mark.llm
 async def test_llm_mocked_sa_rag_sic_code_job_title(
     title,
-    expected_job_title,
+    job_title_in_respondent_data,
     mock_sic_meta_patch,
     classification_llm_with_sic_sa_rag_sic,
 ):
@@ -229,15 +229,19 @@ async def test_llm_mocked_sa_rag_sic_code_job_title(
             "two_digit_code": "11",
         }
     ]
-    result = (
+    respondent_data_str = (
         await classification_llm_with_sic_sa_rag_sic.sa_rag_sic_code(
             "school",
             title,
             "educate kids",
             short_list=short_list,
         )
-    )[2]["job_title"]
-    assert result == expected_job_title
+    )[2]["respondent_data"]
+    if job_title_in_respondent_data:
+        assert "Job title" in respondent_data_str
+        assert title in respondent_data_str
+    else:
+        assert "Job title" not in respondent_data_str
 
 
 @pytest.mark.llm
@@ -402,27 +406,31 @@ async def test_sa_rag_sic_code_prep_followup_is_str(
 
 
 @pytest.mark.parametrize(
-    "title, expected_job_title",
+    "title, job_title_in_respondent_data",
     [
-        ("", "Unknown"),
-        (" ", "Unknown"),
-        (None, "Unknown"),
-        ("teacher", "teacher"),
+        ("", False),
+        (" ", False),
+        (None, False),
+        ("teacher", True),
     ],
 )
 @pytest.mark.llm
 async def test_unambiguous_sic_code_call_dict_job_title_correct(
     title,
-    expected_job_title,
+    job_title_in_respondent_data,
     mock_sic_meta_patch,
     classification_llm_with_sic_unambiguous,
 ):
-    result = (
+    respondent_data_str = (
         await classification_llm_with_sic_unambiguous.unambiguous_sic_code(
             "school", [{"title": "Education", "code": "11111"}], title, "educate kids"
         )
-    )[1]["job_title"]
-    assert result == expected_job_title
+    )[1]["respondent_data"]
+    if job_title_in_respondent_data:
+        assert "Job title" in respondent_data_str
+        assert title in respondent_data_str
+    else:
+        assert "Job title" not in respondent_data_str
 
 
 @pytest.mark.llm
