@@ -48,6 +48,10 @@ from survey_assist_classification_core.models.response_model import (
     UnambiguousResponse,
 )
 from survey_assist_classification_core.utils.constants import truncate_identifier
+from survey_assist_classification_core.utils.prep_respondent_data import (
+    respondent_data_to_dict,
+    respondent_data_to_multiline_string,
+)
 
 logger = get_logger(__name__)
 
@@ -270,14 +274,21 @@ class ClassificationLLM:
             if self.classification_type == "soc"
             else self.sic_prompt_openfollowup
         )
+        respondent_data = respondent_data_to_dict(
+            industry_descr=industry_descr,
+            job_title=job_title,
+            job_description=job_description,
+            level_of_education=level_of_education if self.classification_type == "soc" else None,
+        )
+        logger.info(
+            "formulate_open_question respondent data",
+            **{k: truncate_identifier(str(v)) for k, v in respondent_data.items()},
+            correlation_id=correlation_id or "",
+        )
         call_dict: dict[str, Any] = {
-            "industry_descr": industry_descr,
-            "job_title": self._coerce_unknown(job_title),
-            "job_description": self._coerce_unknown(job_description),
+            "respondent_data": respondent_data_to_multiline_string(respondent_data),
             "llm_output": str(llm_output),
         }
-        if self.classification_type == "soc":
-            call_dict["level_of_education"] = self._coerce_unknown(level_of_education)
 
         if self.verbose:
             final_prompt = prompt.format(**call_dict)
@@ -286,10 +297,6 @@ class ClassificationLLM:
         chain = prompt | self.llm
         logger.info(
             "LLM request sent - formulate_open_question",
-            job_title=truncate_identifier(job_title),
-            job_description=truncate_identifier(job_description),
-            level_of_education=truncate_identifier(str(level_of_education)),
-            industry_descr=truncate_identifier(industry_descr),
             correlation_id=correlation_id or "",
         )
         llm_start = time.perf_counter()
@@ -475,27 +482,6 @@ class ClassificationLLM:
         if code_digits is None:
             code_digits = self.config["llm"]["code_digits"]
 
-        def prep_call_dict(industry_descr, job_title, job_description, sic_codes):
-            # Helper function to prepare the call dictionary
-            is_job_title_present = job_title is None or job_title in {"", " "}
-            job_title = "Unknown" if is_job_title_present else job_title
-
-            is_job_description_present = job_description is None or job_description in {
-                "",
-                " ",
-            }
-            job_description = (
-                "Unknown" if is_job_description_present else job_description
-            )
-
-            call_dict = {
-                "industry_descr": industry_descr,
-                "job_title": job_title,
-                "job_description": job_description,
-                "sic_index": sic_codes,
-            }
-            return call_dict
-
         if short_list is None:
             raise ValueError(
                 "Short list is None - list provided from embedding search."
@@ -505,12 +491,19 @@ class ClassificationLLM:
             short_list, code_digits=code_digits, candidates_limit=candidates_limit
         )
 
-        call_dict = prep_call_dict(
+        respondent_data = respondent_data_to_dict(
             industry_descr=industry_descr,
             job_title=job_title,
             job_description=job_description,
-            sic_codes=sic_codes,
         )
+        logger.info(
+            "sa_rag_sic_code respondent data",
+            **{k: truncate_identifier(str(v)) for k, v in respondent_data.items()},
+        )
+        call_dict = {
+            "respondent_data": respondent_data_to_multiline_string(respondent_data),
+            "sic_index": sic_codes,
+        }
 
         if self.verbose:
             final_prompt = self.sa_sic_prompt_rag.format(**call_dict)
@@ -618,19 +611,18 @@ class ClassificationLLM:
             candidates_limit=candidates_limit,
         )
 
-        job_title = (
-            "Unknown" if (job_title is None or job_title in {"", " "}) else job_title
+        respondent_data = respondent_data_to_dict(
+            industry_descr=industry_descr,
+            job_title=job_title,
+            job_description=job_description,
         )
-        job_description = (
-            "Unknown"
-            if (job_description is None or job_description in {"", " "})
-            else job_description
+        logger.info(
+            "unambiguous_sic_code respondent data",
+            **{k: truncate_identifier(str(v)) for k, v in respondent_data.items()},
+            correlation_id=correlation_id or "",
         )
-
         call_dict = {
-            "industry_descr": industry_descr,
-            "job_title": job_title,
-            "job_description": job_description,
+            "respondent_data": respondent_data_to_multiline_string(respondent_data),
             "sic_candidates": sic_candidates,
         }
 
@@ -643,9 +635,6 @@ class ClassificationLLM:
         # Log LLM request sent
         logger.info(
             "LLM request sent - unambiguous_sic_code",
-            job_title=truncate_identifier(job_title),
-            job_description=truncate_identifier(job_description),
-            industry_descr=truncate_identifier(industry_descr),
             correlation_id=correlation_id or "",
         )
         llm_start = time.perf_counter()
@@ -909,25 +898,19 @@ class ClassificationLLM:
             candidates_limit=candidates_limit,
         )
 
-        job_title = (
-            "Unknown" if (job_title is None or job_title in {"", " "}) else job_title
+        respondent_data = respondent_data_to_dict(
+            industry_descr=industry_descr,
+            job_title=job_title,
+            job_description=job_description,
+            level_of_education=level_of_education,
         )
-        job_description = (
-            "Unknown"
-            if (job_description is None or job_description in {"", " "})
-            else job_description
+        logger.info(
+            "unambiguous_soc_code respondent data",
+            **{k: truncate_identifier(str(v)) for k, v in respondent_data.items()},
+            correlation_id=correlation_id or "",
         )
-        level_of_education = (
-            "Unknown"
-            if (level_of_education is None or level_of_education in {"", " "})
-            else level_of_education
-        )
-
         call_dict = {
-            "industry_descr": industry_descr,
-            "job_title": job_title,
-            "job_description": job_description,
-            "level_of_education": level_of_education,
+            "respondent_data": respondent_data_to_multiline_string(respondent_data),
             "soc_candidates": soc_candidates,
         }
 
@@ -938,10 +921,6 @@ class ClassificationLLM:
         chain = self.soc_prompt_unambiguous | self.llm
         logger.info(
             "LLM request sent - unambiguous_soc_code",
-            job_title=truncate_identifier(job_title),
-            job_description=truncate_identifier(job_description),
-            level_of_education=truncate_identifier(str(level_of_education)),
-            industry_descr=truncate_identifier(industry_descr),
             correlation_id=correlation_id or "",
         )
         llm_start = time.perf_counter()
