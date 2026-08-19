@@ -278,7 +278,9 @@ class ClassificationLLM:
             industry_descr=industry_descr,
             job_title=job_title,
             job_description=job_description,
-            level_of_education=level_of_education if self.classification_type == "soc" else None,
+            level_of_education=level_of_education
+            if self.classification_type == "soc"
+            else None,
         )
         logger.info(
             "formulate_open_question respondent data",
