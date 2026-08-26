@@ -20,7 +20,6 @@ from langchain_openai import ChatOpenAI
 
 from survey_assist_classification_core.llm.llm import ClassificationLLM
 from survey_assist_classification_core.models.response_model import (
-    FinalSICAssignment,
     OpenFollowUp,
     SicResponse,
     UnambiguousResponse,
@@ -256,28 +255,6 @@ async def test_llm_response_mocked_unambiguous_sic_code(
         job_title="",
     )
     assert isinstance(result[0], UnambiguousResponse)
-    assert isinstance(result[1], dict)
-
-
-@pytest.mark.llm
-async def test_llm_response_mocked_final_sic_code(mocker, prompt_candidate_sic):
-    mock_object_dict = {
-        "codable": True,
-        "unambiguous_code": "11111",
-        "unambiguous_code_descriptive": "descriptive11111",
-        "higher_level_code": "1111",
-        "reasoning": "This is reasoning for the llm answer. Padded to 50 characters (Pydantic)",
-    }
-    mock_object_json = json.dumps(mock_object_dict)
-    mock_message = mocker.Mock(spec=AIMessage)
-    mock_message.content = mock_object_json
-    mock_patcher = mocker.patch(  # noqa: F841
-        "survey_assist_classification_core.llm.llm.ChatVertexAI.ainvoke",
-        return_value=mock_message,
-    )
-
-    result = await prompt_candidate_sic.final_sic_code(industry_descr="")
-    assert isinstance(result[0], FinalSICAssignment)
     assert isinstance(result[1], dict)
 
 
