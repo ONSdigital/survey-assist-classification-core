@@ -11,7 +11,6 @@ Classes:
     RagCandidate: Represents a candidate classification code with associated information.
     UnambiguousResponse: Represents a response model for unambiguous
                          classification code assignment.
-    FinalSICAssignment: Response model for final assignment of a SIC code.
     OpenFollowUp: Represents a response model for open ended follow-up question.
     TopOneResponse: Top-ranked SOC code selected from a supplied shortlist.
 Constants:
@@ -234,45 +233,6 @@ class UnambiguousResponse(BaseModel):
         if not 1 <= len(v) <= MAX_ALT_CANDIDATES:
             raise ValueError("alt_candidates must contain between 1 and 10 items.")
         return v
-
-
-class FinalSICAssignment(BaseModel):
-    """Response model for final assignment of a SIC code.
-
-    Attributes:
-        codable (bool): True if enough information is provided to assign
-            an unambiguous single 5-digit classification code, False otherwise.
-        unambiguous_code (Optional[str]): Full 5-digit classification code
-            assigned based on provided respondent's data. Must be present if codable=True,
-            must be None if codable=False.
-        unambiguous_code_descriptive (Optional[str]): Descriptive label of the classification
-            category. Must be present if codable=True, must be None if codable=False.
-        higher_level_code (Optional[str]): Classification code with X notation to pad to 5 digits.
-            Must be present if codable=False, must be None if codable=True.
-        reasoning (str): Step by step reasoning behind the classification selected.
-    """
-
-    codable: bool = Field(
-        description="True only if enough information is provided to decide an unambiguous "
-        "classification code, False otherwise."
-    )
-    unambiguous_code: str | None = Field(
-        description="Full 5-digit classification code "
-        "assigned based on provided respondent's data. Must be present if codable=True, "
-        "must be None if codable=False."
-    )
-    unambiguous_code_descriptive: str | None = Field(
-        description="Descriptive label of the classification category. "
-        "Must be present if codable=True, must be None if codable=False."
-    )
-    higher_level_code: str | None = Field(
-        description="Classification code with X notation to pad to 5 digits. "
-        "Must be present if codable=False, must be None if codable=True."
-    )
-    reasoning: str = Field(
-        description="Step by step reasoning behind the classification selected.",
-        min_length=50,
-    )
 
 
 class OpenFollowUp(BaseModel):
