@@ -6,7 +6,6 @@ from survey_assist_classification_core.llm.llm import ClassificationLLM
 from survey_assist_classification_core.llm.prompt import (
     FIX_PARSING_PROMPT,
     SA_SIC_PROMPT_RAG,
-    SIC_PROMPT_FINAL_ASSIGNMENT,
     SIC_PROMPT_OPENFOLLOWUP,
     SIC_PROMPT_UNAMBIGUOUS,
     SOC_PROMPT_OPENFOLLOWUP,
@@ -34,7 +33,6 @@ class SocClassificationLLM(ClassificationLLM):
 __all__ = [
     "FIX_PARSING_PROMPT",
     "SA_SIC_PROMPT_RAG",
-    "SIC_PROMPT_FINAL_ASSIGNMENT",
     "SIC_PROMPT_OPENFOLLOWUP",
     "SIC_PROMPT_UNAMBIGUOUS",
     "SOC_PROMPT_OPENFOLLOWUP",
