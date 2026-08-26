@@ -10,7 +10,6 @@ import pytest
 
 from survey_assist_classification_core.llm import (
     SA_SIC_PROMPT_RAG,
-    SIC_PROMPT_FINAL_ASSIGNMENT,
     SIC_PROMPT_OPENFOLLOWUP,
     SIC_PROMPT_UNAMBIGUOUS,
     SOC_PROMPT_OPENFOLLOWUP,
@@ -21,14 +20,12 @@ from survey_assist_classification_core.llm import (
 _SIC_PUBLIC_METHODS = (
     "sa_rag_sic_code",
     "unambiguous_sic_code",
-    "final_sic_code",
 )
 _SOC_PUBLIC_METHODS = ("unambiguous_soc_code",)
 _SIC_PROMPTS = (
     "sa_sic_prompt_rag",
     "sic_prompt_unambiguous",
     "sic_prompt_openfollowup",
-    "sic_prompt_final",
 )
 _SOC_PROMPTS = (
     "soc_prompt_unambiguous",
@@ -46,7 +43,6 @@ def test_sic_classification_llm_instantiates_with_prompts() -> None:
     assert sic.sa_sic_prompt_rag is SA_SIC_PROMPT_RAG
     assert sic.sic_prompt_unambiguous is SIC_PROMPT_UNAMBIGUOUS
     assert sic.sic_prompt_openfollowup is SIC_PROMPT_OPENFOLLOWUP
-    assert sic.sic_prompt_final is SIC_PROMPT_FINAL_ASSIGNMENT
     assert callable(sic.formulate_open_question)
     for method_name in _SIC_PUBLIC_METHODS:
         assert callable(getattr(sic, method_name))
