@@ -1,7 +1,7 @@
 """Module for generating prompt templates for SIC classification tasks.
 
 This module provides prompt templates for Survey Assist SIC flows that remain in use:
-unambiguous coding, SA RAG shortlisting, final assignment, and open follow-up.
+unambiguous coding, SA RAG shortlisting, and open follow-up.
 """
 
 # pylint: disable=invalid-name,duplicate-code # Need to clean up the code to remove this
@@ -11,7 +11,6 @@ from langchain_core.prompts import PromptTemplate
 
 from survey_assist_classification_core.llm.prompt_common import CORE_PROMPT
 from survey_assist_classification_core.models.response_model import (
-    FinalSICAssignment,
     OpenFollowUp,
     SicResponse,
     UnambiguousResponse,
@@ -110,73 +109,6 @@ SIC_PROMPT_UNAMBIGUOUS = PromptTemplate.from_template(
     },
 )
 
-_sic_template_final_assignment = """"You are an expert in industrial classifications.
-You are tasked with assigning UK Standard Industrial Classification (SIC) codes to survey
-responses with high confidence.
-
-Key objective: You MUST assign a 5-digit SIC code from the candidates provided. Only provide a higher-level
-code if multiple candidates have nearly identical confidence scores (within 0.2 of each other) AND no single
-can be identified as the clear best match.
-
-Assignment logic:
-1. Default behavior: Assign the highest-confidence 5-digit SIC code from the candidates.
-2. Higher-level code exception: Only if two or more codes have confidence scores within 0.2
- of each other AND you cannot determine a clear winner. Provide the most granular
-higher-level code with X padding to 5-digits (e.g., 8610X for 4-digit confidence, 86XXX for
-3-digit confidence, 8XXXX for 2-digit confidence).
-3. 95% confidence interpretation: This means "more likely than not" given the available evidence -
-not absolute certainty.
-
-Key principles:
-1. Focus on Best Fit: Rather than seeking absolute certainty, identify which code best fits the totality of evidence.
-2. Prioritise information on employer of the respondent rather than their specific role.
-3. Be Decisive: The goal is accurate classification, not perfect certainty. If evidence clearly points to one
-code over others, assign it confidently.
-
-Important: When a respondent's closed question answer directly matches or closely aligns with a SIC code
-description, this constitutes strong evidence for that code.
-
-Follow these steps in order:
-1. Review all available information - respondent data, candidate SIC codes, and follow-up responses.
-2. Evaluate each candidate SIC code against all available evidence.
-3. Assign confidence scores - Rate each candidate from 0.1 (least likely) to 0.9 (most likely).
-Weight respondent's own descriptions heavily.
-4. Apply assignment logic - Select the candidate with the highest confidence score as your primary assignment.
-Only consider higher-level coding if multiple candidates have nearly identical scores (within 0.2) and you cannot
-differentiate between them.
-5. Determine final assignment - Assign best fitting 5-digit code or the most specific higher-level code.
-6. Provide clear reasoning - Explain your decision with specific evidence.
-
-===Respondent Data===
-- Company's main activity: {industry_descr}
-- Job Title: {job_title}
-- Job Description: {job_description}
-
-===Short list of UK SIC codes===
-{sic_candidates}
-
-===Follow up question 1===
-{open_question}
-{answer_to_open_question}
-
-===Follow up question 2===
-{closed_question}
-{answer_to_closed_question}
-
-===Output Format===
-{format_instructions}
-"""
-parser_final_assignment = PydanticOutputParser(  # type: ignore # Suspect langchain ver bug
-    pydantic_object=FinalSICAssignment
-)
-
-SIC_PROMPT_FINAL_ASSIGNMENT = PromptTemplate.from_template(
-    template=_core_prompt + _sic_template_final_assignment,
-    partial_variables={
-        "format_instructions": parser_final_assignment.get_format_instructions(),
-    },
-)
-
 
 _open_follow_up = """"You are an expert survey methodologist specialising in
     UK industrial classification (UK SIC). Generate one open-ended follow-up question
@@ -250,14 +182,12 @@ class PromptTemplates:
         SA_SIC_PROMPT_RAG (PromptTemplate): A prompt template for SA SIC with RAG.
         SIC_PROMPT_UNAMBIGUOUS (PromptTemplate): A prompt template for unambiguous
                                                     SIC classification.
-        SIC_PROMPT_FINAL_ASSIGNMENT (PromptTemplate): Final SIC assignment prompt.
         SIC_PROMPT_OPENFOLLOWUP (PromptTemplate): Open follow-up question prompt.
     """
 
     def __init__(self):
         self.SA_SIC_PROMPT_RAG = SA_SIC_PROMPT_RAG
         self.SIC_PROMPT_UNAMBIGUOUS = SIC_PROMPT_UNAMBIGUOUS
-        self.SIC_PROMPT_FINAL_ASSIGNMENT = SIC_PROMPT_FINAL_ASSIGNMENT
         self.SIC_PROMPT_OPENFOLLOWUP = SIC_PROMPT_OPENFOLLOWUP
 
     def get_all_templates(self) -> list[PromptTemplate]:
@@ -265,6 +195,5 @@ class PromptTemplates:
         return [
             self.SA_SIC_PROMPT_RAG,
             self.SIC_PROMPT_UNAMBIGUOUS,
-            self.SIC_PROMPT_FINAL_ASSIGNMENT,
             self.SIC_PROMPT_OPENFOLLOWUP,
         ]
