@@ -16,7 +16,6 @@ from survey_assist_classification_core.llm import (
     ClassificationLLM,
 )
 from survey_assist_classification_core.models import (
-    FinalSICAssignment,
     OpenFollowUp,
     SicResponse,
     UnambiguousResponse,
@@ -64,7 +63,6 @@ def test_response_models_import_from_models_package() -> None:
     """Kept response models for remaining prompts are importable."""
     assert SicResponse is not None
     assert UnambiguousResponse is not None
-    assert FinalSICAssignment is not None
     assert OpenFollowUp is not None
 
 
@@ -83,12 +81,12 @@ def test_classification_llm_supports_sic_and_soc() -> None:
     soc = ClassificationLLM(classification_type="soc", llm=mock_llm)
     assert hasattr(sic, "unambiguous_sic_code")
     assert hasattr(sic, "sa_rag_sic_code")
-    assert hasattr(sic, "final_sic_code")
     assert hasattr(sic, "formulate_open_question")
     assert hasattr(soc, "unambiguous_soc_code")
     assert hasattr(soc, "top_one_soc_code")
     assert hasattr(soc, "formulate_open_question")
     assert not hasattr(sic, "unambiguous_soc_code")
+    assert not hasattr(sic, "final_sic_code")
     assert not hasattr(soc, "sa_rag_sic_code")
 
 
