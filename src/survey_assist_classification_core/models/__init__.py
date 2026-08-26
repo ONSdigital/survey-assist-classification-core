@@ -11,7 +11,6 @@ from survey_assist_classification_core.models.config_model import (
     SocLookupsConfig,
 )
 from survey_assist_classification_core.models.response_model import (
-    FinalSICAssignment,
     OpenFollowUp,
     SicResponse,
     TopOneResponse,
@@ -21,7 +20,6 @@ from survey_assist_classification_core.models.response_model import (
 __all__ = [
     "EmbeddingConfig",
     "EmbeddingStatus",
-    "FinalSICAssignment",
     "FullConfig",
     "LLMConfig",
     "LookupsConfig",
