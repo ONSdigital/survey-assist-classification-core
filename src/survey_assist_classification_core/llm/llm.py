@@ -31,7 +31,6 @@ from survey_assist_classification_core.config import get_config
 from survey_assist_classification_core.llm.prompt import (
     FIX_PARSING_PROMPT,
     SA_SIC_PROMPT_RAG,
-    SIC_PROMPT_FINAL_ASSIGNMENT,
     SIC_PROMPT_OPENFOLLOWUP,
     SIC_PROMPT_UNAMBIGUOUS,
     SOC_PROMPT_OPENFOLLOWUP,
@@ -39,7 +38,6 @@ from survey_assist_classification_core.llm.prompt import (
     SOC_PROMPT_UNAMBIGUOUS,
 )
 from survey_assist_classification_core.models.response_model import (
-    FinalSICAssignment,
     OpenFollowUp,
     RagCandidate,
     SicCandidate,
@@ -59,13 +57,11 @@ _SIC_ONLY_ATTRS = frozenset(
     {
         "sa_rag_sic_code",
         "unambiguous_sic_code",
-        "final_sic_code",
         "_prompt_candidate_sic",
         "sic_meta",
         "sa_sic_prompt_rag",
         "sic_prompt_unambiguous",
         "sic_prompt_openfollowup",
-        "sic_prompt_final",
         "sic",
     }
 )
@@ -134,7 +130,6 @@ class ClassificationLLM:
             self.sa_sic_prompt_rag = SA_SIC_PROMPT_RAG
             self.sic_prompt_unambiguous = SIC_PROMPT_UNAMBIGUOUS
             self.sic_prompt_openfollowup = SIC_PROMPT_OPENFOLLOWUP
-            self.sic_prompt_final = SIC_PROMPT_FINAL_ASSIGNMENT
         else:
             self.soc_meta = get_soc_meta(self.config["lookups"]["soc_structure"])
             self.soc_prompt_unambiguous = SOC_PROMPT_UNAMBIGUOUS
@@ -722,156 +717,6 @@ class ClassificationLLM:
                 validated_answer = UnambiguousResponse(
                     codable=False,
                     alt_candidates=[],
-                    reasoning=reasoning,
-                )
-
-        return validated_answer, call_dict
-
-    async def final_sic_code(  # noqa: PLR0913
-        self,
-        industry_descr: str,
-        job_title: str | None = None,
-        job_description: str | None = None,
-        sic_candidates: str | None = None,
-        open_question: str | None = None,
-        answer_to_open_question: str | None = None,
-        closed_question: str | None = None,
-        answer_to_closed_question: str | None = None,
-    ) -> tuple[FinalSICAssignment, Any | None]:
-        """Evaluates codability to a single 5-digit SIC code based on respondent's data
-            and answers to follow-up questions.
-
-        Args:
-            industry_descr (str): The description of the industry.
-            job_title (str, optional): The job title. Defaults to None.
-            job_description (str, optional): The job description. Defaults to None.
-            sic_candidates: (str, optional): Short list of SIC candidates to pass to LLM.
-            open_question (str, optional): The open question. Defaults to None.
-            answer_to_open_question (str, optional): The answer to the open question.
-                Defaults to None.
-            closed_question (str, optional): The closed question. Defaults to None.
-            answer_to_closed_question (str, optional): The answer to the closed question.
-                Defaults to None.
-
-        Returns:
-            FinalSICAssignment: The generated response to the query.
-
-        Raises:
-            ValueError: If there is an error during the parsing of the response.
-            ValueError: If the default embedding handler is required but
-                not loaded correctly.
-
-        """
-        self._require_domain("sic")
-
-        def prep_call_dict(  # noqa: PLR0913
-            industry_descr,
-            job_title,
-            job_description,
-            sic_candidates,
-            open_question,
-            answer_to_open_question,
-            closed_question,
-            answer_to_closed_question,
-        ):
-            # Helper function to prepare the call dictionary
-            is_job_title_present = job_title is None or job_title in {"", " "}
-            job_title = "Unknown" if is_job_title_present else job_title
-
-            is_job_description_present = job_description is None or job_description in {
-                "",
-                " ",
-            }
-            job_description = (
-                "Unknown" if is_job_description_present else job_description
-            )
-
-            call_dict = {
-                "industry_descr": industry_descr,
-                "job_title": job_title,
-                "job_description": job_description,
-                "sic_candidates": sic_candidates,
-                "open_question": open_question,
-                "answer_to_open_question": answer_to_open_question,
-                "closed_question": closed_question,
-                "answer_to_closed_question": answer_to_closed_question,
-            }
-            return call_dict
-
-        call_dict = prep_call_dict(
-            industry_descr=industry_descr,
-            job_title=job_title,
-            job_description=job_description,
-            sic_candidates=sic_candidates,
-            open_question=open_question,
-            answer_to_open_question=answer_to_open_question,
-            closed_question=closed_question,
-            answer_to_closed_question=answer_to_closed_question,
-        )
-
-        if self.verbose:
-            final_prompt = self.sic_prompt_final.format(**call_dict)
-            logger.debug(f"Final prompt: {final_prompt}")
-
-        chain = self.sic_prompt_final | self.llm
-
-        try:
-            response = await chain.ainvoke(call_dict, return_only_outputs=True)
-        except ValueError as err:
-            logger.error(f"Error from chain, exit early: {err}", error=str(err))
-            validated_answer = FinalSICAssignment(
-                codable=False,
-                unambiguous_code="N/A",
-                unambiguous_code_descriptive="N/A",
-                higher_level_code="N/A",
-                reasoning="Error from chain, exit early",
-            )
-            return validated_answer, call_dict
-
-        if self.verbose:
-            logger.debug(f"llm_response={response}")
-
-        # Parse the output to the desired format
-        parser = PydanticOutputParser(pydantic_object=FinalSICAssignment)  # type: ignore
-        try:
-            validated_answer = parser.parse(str(response.content))
-        except (ValueError, AttributeError) as parse_error:
-            logger.error(
-                f"Failed to parse response: {parse_error}", error=str(parse_error)
-            )
-            logger.warning(
-                "Failed to parse response", response_content=str(response.content)
-            )
-
-            try:
-                chain = FIX_PARSING_PROMPT | self.llm
-                response = await chain.ainvoke(
-                    {
-                        "llm_output": str(response.content),
-                        "format_instructions": parser.get_format_instructions(),
-                    },
-                    return_only_outputs=True,
-                )
-                validated_answer = parser.parse(str(response.content))
-                logger.debug("Successfully parsed reformatted response.")
-
-            except (ValueError, AttributeError) as parse_error2:
-                logger.error(
-                    f"Failed to parse response again: {parse_error2}",
-                    error=str(parse_error2),
-                )
-                logger.warning(
-                    "Failed to parse response again",
-                    response_content=str(response.content),
-                )
-                reasoning = (
-                    f"ERROR parse_error=<{parse_error2}>, response=<{response.content}>"
-                )
-                validated_answer = FinalSICAssignment(
-                    codable=False,
-                    unambiguous_code="N/A",
-                    unambiguous_code_descriptive="N/A",
-                    higher_level_code="N/A",
                     reasoning=reasoning,
                 )
 
